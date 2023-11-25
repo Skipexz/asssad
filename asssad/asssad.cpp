@@ -1,20 +1,97 @@
-﻿// asssad.cpp : Этот файл содержит функцию "main". Здесь начинается и заканчивается выполнение программы.
-//
-
 #include <iostream>
+#include <ctime>
+#include <cstdlib>
 
-int main()
-{
-    std::cout << "Hello World!\n";
+using namespace std;
+
+const int BOARD_SIZE = 10;
+const char EMPTY = '-';
+const char SHIP = '+';
+const char MISS = 'O';
+const char HIT = 'X';
+
+struct Ship {
+    int size;
+    int hits;
+    bool sunk;
+};
+
+struct Player {
+    char board[BOARD_SIZE][BOARD_SIZE];
+    char visibleBoard[BOARD_SIZE][BOARD_SIZE];
+    Ship ships[10];
+};
+
+void hideComputerShips(Player& computer) {
+    for (int i = 0; i < BOARD_SIZE; ++i) {
+        for (int j = 0; j < BOARD_SIZE; ++j) {
+            if (computer.board[i][j] == SHIP) {
+                computer.visibleBoard[i][j] = EMPTY;
+            }
+            else {
+                computer.visibleBoard[i][j] = computer.board[i][j];
+            }
+        }
+    }
 }
 
-// Запуск программы: CTRL+F5 или меню "Отладка" > "Запуск без отладки"
-// Отладка программы: F5 или меню "Отладка" > "Запустить отладку"
 
-// Советы по началу работы 
-//   1. В окне обозревателя решений можно добавлять файлы и управлять ими.
-//   2. В окне Team Explorer можно подключиться к системе управления версиями.
-//   3. В окне "Выходные данные" можно просматривать выходные данные сборки и другие сообщения.
-//   4. В окне "Список ошибок" можно просматривать ошибки.
-//   5. Последовательно выберите пункты меню "Проект" > "Добавить новый элемент", чтобы создать файлы кода, или "Проект" > "Добавить существующий элемент", чтобы добавить в проект существующие файлы кода.
-//   6. Чтобы снова открыть этот проект позже, выберите пункты меню "Файл" > "Открыть" > "Проект" и выберите SLN-файл.
+int main() {
+    Player human, computer;
+    initializeBoard(human.board);
+    initializeBoard(computer.board);
+
+    setupPlayerShips(human);
+    setupComputerShips(computer);
+
+    bool gameOver = false;
+    bool humanTurn = true;
+
+    hideComputerShips(computer);
+
+
+    while (!gameOver) {
+        printBoards(human.board, computer.visibleBoard);
+
+        if (humanTurn) {
+            cout << "Your turn!" << endl;
+            cout << "Take a shot (row column): ";
+            int row, col;
+            cin >> row >> col;
+
+            if (row < 0  row >= BOARD_SIZE  col < 0 || col >= BOARD_SIZE) {
+                cout << "Invalid move, try again." << endl;
+                continue;
+            }
+
+            if (makeMove(computer.board, row, col)) {
+                cout << "Hit!" << endl;
+                computer.visibleBoard[row][col] = HIT;
+            }
+            else {
+                cout << "Miss!" << endl;
+                computer.visibleBoard[row][col] = MISS;
+            }
+
+            if (hasPlayerWon(computer)) {
+                printBoards(human.board, computer.visibleBoard);
+                cout << "Congratulations! You win!" << endl;
+                gameOver = true;
+            }
+        }
+        else {
+            cout << "Computer's turn!" << endl;
+            computerMove(human.board);
+
+            if (hasPlayerWon(human)) {
+                printBoards(human.board, computer.visibleBoard);
+                cout << "Computer wins! Better luck next time." << endl;
+                gameOver = true;
+            }
+        }
+
+        humanTurn = !humanTurn;
+    }
+
+    return 0;
+}
